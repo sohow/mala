@@ -23,6 +23,7 @@ let server = http.createServer();
 
 let curFileList = {};
 let bot = null;
+let botName = '';
 
 
 server.on('request', async (request, response) => {
@@ -136,6 +137,7 @@ function onScan (qrcode, status) {
 
 function onLogin (user) {
   log.info('StarterBot', '%s login', user);
+  botName = user.name();
 }
 
 function onLogout (user) {
@@ -150,8 +152,7 @@ async function onMessage (msg) {
      log.info('StarterBot', msg.toString());
 
     if (msg.text().indexOf('alipan ') > 0) {
-        let toContact = msg.to();
-        let cmd = msg.text().replace('@' + toContact.name() + ' alipan ', '');
+        let cmd = msg.text().replace('@' + botName + ' alipan ', '');
         let resMsg = 'unknow command: ' + cmd;
         if (cmd === 'notice') {
             let fileList = GetListFileByKey('file_id');
