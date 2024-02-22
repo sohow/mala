@@ -1,0 +1,5 @@
+.DS_Store
+*card.json
+*.txt
+package-lock.json
+node_modules/
