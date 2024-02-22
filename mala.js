@@ -44,7 +44,7 @@ server.on('request', async (request, response) => {
             break;
         case '/mala/alipan/refresh':
             response.setHeader('Content-Type', 'application/json; charset=utf-8');
-            
+
             FreshToken({code: 'AutoRefresh'});
 
             response.end(JSON.stringify(
@@ -75,8 +75,8 @@ server.on('request', async (request, response) => {
             response.setHeader('Content-Type', 'application/json; charset=utf-8');
             let num = GetTodayUploadNum();
             if (num === 0) {
-                const contact = await bot.Contact.find({name: '不辞远'});
-                await contact.say('【REMIND】今天还未分享学习视频 ，学习计划：https://docs.qq.com/sheet/DVnVnWGVWZWlBWERI');
+                const contact = await bot.Contact.find({name: 'Lunida'});
+                await contact.say('【REMIND】今天还未分享学习视频 ');
             }
 
             response.end(JSON.stringify(
@@ -95,7 +95,7 @@ server.on('request', async (request, response) => {
                 ));
             break;
         case '/mala/contact/say':
-            const contact = await bot.Contact.find({name: '不辞远'});
+            const contact = await bot.Contact.find({name: 'Lunida'});
             console.log(contact);
             sayres = await contact.say('welcome to wechaty!');
             console.log(sayres);
@@ -150,7 +150,8 @@ async function onMessage (msg) {
      log.info('StarterBot', msg.toString());
 
     if (msg.text().indexOf('alipan ') > 0) {
-        let cmd = msg.text().replace('@天文数字 alipan ', '');
+        let toContact = msg.to();
+        let cmd = msg.text().replace('@' + toContact.name() + ' alipan ', '');
         let resMsg = 'unknow command: ' + cmd;
         if (cmd === 'notice') {
             let fileList = GetListFileByKey('file_id');
