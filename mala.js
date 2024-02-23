@@ -206,6 +206,11 @@ bot.start()
 AlipanInitConf();
 curFileList = GetListFileByKey('file_id');
 
-server.listen(8088, function () {
-    console.log("服务器启动成功，可以通过 http://127.0.0.1:8088/mala/contact/say 来进行访问");
-});
+try {
+    server.listen(8088, function () {
+        console.log("服务器启动成功，可以通过 http://127.0.0.1:8088/mala/contact/say 来进行访问");
+    });
+} catch (e) {
+    console.log('server exist: ', e);
+}
+
