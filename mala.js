@@ -13,7 +13,10 @@ const {
     ListFile,
     FreshToken,
     GetListFileByKey,
-    GetTodayUploadNum
+    GetTodayUploadNum,
+    RenewSession,
+    CreateSession,
+    RefreshToken
 }                     = require('./alipan');
 
 
@@ -28,10 +31,7 @@ let botName = '';
 
 server.on('request', async (request, response) => {
     const path = url.parse(request.url,true).query;
-    let site = path.site;
-    const proxy = path.proxy ?? "";
-    const seeksign = path.seeksign ?? "1";
-    const need_icp = path.icp ?? "1";
+    let refreshType = path.refresh_type;
 
     let host_meta = {};
     const remote_ip = request.socket.remoteAddress.replace('::ffff:','');
@@ -46,7 +46,14 @@ server.on('request', async (request, response) => {
         case '/mala/alipan/refresh':
             response.setHeader('Content-Type', 'application/json; charset=utf-8');
 
-            FreshToken({code: 'AutoRefresh'});
+            if (refreshType === 'session') {
+                RenewSession();
+            } else if (refreshType === 'token') {
+                RefreshToken();
+            } else if  (refreshType === 'create_session') {
+                CreateSession();
+            }
+
 
             response.end(JSON.stringify(
                     {
@@ -76,7 +83,7 @@ server.on('request', async (request, response) => {
             response.setHeader('Content-Type', 'application/json; charset=utf-8');
             let num = GetTodayUploadNum();
             if (num === 0) {
-                const contact = await bot.Contact.find({name: 'Lunida'});
+                const contact = await bot.Contact.find({name: '不辞远'});
                 await contact.say('【REMIND】今天还未分享学习视频 ');
             }
 
@@ -96,7 +103,7 @@ server.on('request', async (request, response) => {
                 ));
             break;
         case '/mala/contact/say':
-            const contact = await bot.Contact.find({name: 'Lunida'});
+            const contact = await bot.Contact.find({name: '不辞远'});
             console.log(contact);
             sayres = await contact.say('welcome to wechaty!');
             console.log(sayres);
@@ -161,7 +168,7 @@ async function onMessage (msg) {
             resMsg = '【NOTICE】当前共' + (fileList.length - 2) + '个学习视频';
         } else if (cmd === 'remind') {
             let num = GetTodayUploadNum();
-            resMsg = '【REMIND】今天已分享' + num + '个学习视频 ，学习计划：https://docs.qq.com/sheet/DVnVnWGVWZWlBWERI';
+            resMsg = '【REMIND】今天已分享' + num + '个学习视频';
         }
 
         await msg.say(resMsg);

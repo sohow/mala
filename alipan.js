@@ -1,14 +1,18 @@
+
+const moment = require('moment');
 const { SHA256 } = require('crypto-js');
 const { ecdsaSign, publicKeyCreate } = require('secp256k1');
 const getUuid = require('uuid-by-string');
 const { v4 } = require('uuid');
 const request = require('sync-request');
 const fs = require("fs");
-let {ArrCount} = require('./tools');
+const {ArrCount} = require('./tools');
+const { secp256k1 } = require('@noble/curves/secp256k1');
+const { bytesToHex, hexToBytes, concatBytes, utf8ToBytes } = require('@noble/curves/abstract/utils');
+
+
 
 let alipantokenfile = "alipantoken.txt";
-let driveId = '';
-let parentFileId = '';
 
 let token = {
   token_type: 'Bearer',
@@ -17,7 +21,10 @@ let token = {
   access_token: '',
   signature: '',
   refresh_token: '',
-  nonce: 0
+  nonce: 0,
+  drive_id: '',
+  parent_file_id: ''
+  app_id: ''
 };
 
 function AlipanInitConf() {
@@ -34,13 +41,14 @@ function GetSignature() {
   const deviceId = token.device_id;
   const nonce = token.nonce;
 
-  const toHex = (bytesArr) => {
-    const hashArray = Array.from(bytesArr); // convert buffer to byte array
-    // convert bytes to hex string
-    return hashArray
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-  }
+  // const toHex = (bytesArr) => {
+  //   const hashArray = Array.from(bytesArr); // convert buffer to byte array
+  //   // convert bytes to hex string
+  //   return hashArray
+  //   .map((b) => b.toString(16).padStart(2, '0'))
+  //   .join('');
+  // }
+
   const toU8 = (wordArray) => {
     const words = wordArray.words;
     const sigBytes = wordArray.sigBytes;
@@ -51,17 +59,25 @@ function GetSignature() {
     }
     return u8;
   }
-  const privateKey = toU8(SHA256(user_id));
-  const publicKey = '04' + toHex(publicKeyCreate(privateKey));
-  const appId = '5dde4e1bdf9e4966b387ba58f4b3fdc3';
-  const signature = toHex(ecdsaSign(toU8(SHA256(`${appId}:${deviceId}:${user_id}:${nonce}`)), privateKey).signature) + '01';
-  token.signature = signature;
 
+  //const privateKey = toU8(SHA256(user_id));
+  const appId = token.app_id;
+  const privateKey = secp256k1.utils.randomPrivateKey();
+  let publicKey = secp256k1.getPublicKey(privateKey);
+  const msg = `${appId}:${deviceId}:${user_id}:${nonce}`;
+  const sig = secp256k1.sign(toU8(SHA256(msg)), privateKey);
+  const signature = sig.toCompactHex()+'0'+sig.recovery;
+
+  // const publicKey = '04' + toHex(publicKeyCreate(privateKey));
+  // const appId = '5dde4e1bdf9e4966b387ba58f4b3fdc3';
+  // const signature = toHex(ecdsaSign(toU8(SHA256(`${appId}:${deviceId}:${user_id}:${nonce}`)), privateKey).signature) + '01';
+  publicKey = '04' + bytesToHex(publicKey);
+  token.signature = signature;
   return { signature, publicKey };
 }
 
 
-function ApiSessionRefreshAccount() {
+function CreateSession() {
     if (!token.user_id) {
       return false;
     }
@@ -74,7 +90,6 @@ function ApiSessionRefreshAccount() {
       'pubKey': publicKey
     };
     const resp = AlipanPost(apiUrl, postData, token.user_id, '');
-    console.log(111, resp);
 
     if (resp.success) {
       token.signature = signature;
@@ -85,7 +100,7 @@ function ApiSessionRefreshAccount() {
     return false;
 }
 
-function ApiTokenRefreshAccount() {
+function RefreshToken() {
     if (!token.refresh_token) {
       return false;
     }
@@ -94,7 +109,6 @@ function ApiTokenRefreshAccount() {
     const url = 'https://auth.aliyundrive.com/v2/account/token';
     const postData = { refresh_token: token.refresh_token, grant_type: 'refresh_token' };
     const resp = AlipanPost(url, postData, '', '');
-    console.log(333, resp);
 
     if (resp.access_token) {
       token.access_token = resp.access_token;
@@ -148,12 +162,12 @@ function FreshToken(resp) {
             || resp.code == 'UserDeviceOffline'
             || resp.code == 'DeviceSessionSignatureInvalid'
             || resp.code == 'AutoRefresh') {
-      let res1 = ApiTokenRefreshAccount();
-      let res2 = ApiSessionRefreshAccount();
+      let res1 = CreateSession();
+      let res2 = RefreshToken();
 
       console.log("FreshToken", resp.code, token);
-
-      const resultJson = JSON.stringify(token);
+      
+      const resultJson = JSON.stringify(token, "", "\t");
       fs.writeFileSync(alipantokenfile, resultJson);
       return res1 && res2;
     }
@@ -185,19 +199,29 @@ function AlipanPost(url, postData) {
     result = JSON.parse(e.body.toString());
   }
 
+
+  const now = moment().format('YYYY-MM-DD HH:mm:ss');
+  console.log(now + " url", url);
+  //console.log("result", result);
   return result;
 }
 
-function ListFile(drive_id, parent_file_id) {
-  let data = {"drive_id":drive_id,"parent_file_id":parent_file_id,"limit":20,"all":false,"url_expire_sec":14400,"image_thumbnail_process":"image/resize,w_256/format,avif","image_url_process":"image/resize,w_1920/format,avif","video_thumbnail_process":"video/snapshot,t_120000,f_jpg,m_lfit,w_256,ar_auto,m_fast","fields":"*","order_by":"created_at","order_direction":"DESC"};
+function ListFile() {
+  let data = {"drive_id":token.drive_id,"parent_file_id":token.parent_file_id,"limit":20,"all":false,"url_expire_sec":14400,"image_thumbnail_process":"image/resize,w_256/format,avif","image_url_process":"image/resize,w_1920/format,avif","video_thumbnail_process":"video/snapshot,t_120000,f_jpg,m_lfit,w_256,ar_auto,m_fast","fields":"*","order_by":"created_at","order_direction":"DESC"};
   const res = AlipanPost("https://api.aliyundrive.com/adrive/v3/file/list", data);
   return res;
 }
 
+function RenewSession() {
+  let data = {};
+  const res = AlipanPost("https://api.aliyundrive.com/users/v1/users/device/renew_session", data);
+  return res;
+}
+
 function GetListFileByKey(key) {
-  let res = ListFile(driveId, parentFileId);
+  let res = ListFile();
   if (FreshToken(res)) {
-    res = ListFile(driveId, parentFileId);
+    res = ListFile();
   }
   if (!res.items) {
     return [];
@@ -228,13 +252,16 @@ module.exports = {
     ListFile,
     FreshToken,
     GetListFileByKey,
-    GetTodayUploadNum
+    GetTodayUploadNum,
+    RenewSession,
+    CreateSession,
+    RefreshToken
 };
 
 //let res = ApiSessionRefreshAccount();
  //console.log(222, res);
 
- // AlipanInitConf();
+ //AlipanInitConf();
  // res = GetListFileByKey('file_id');
  // console.log(666, res);
  // console.log("token", token);
