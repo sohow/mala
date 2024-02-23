@@ -201,7 +201,7 @@ function AlipanPost(url, postData) {
 
 
   const now = moment().format('YYYY-MM-DD HH:mm:ss');
-  console.log(now + " url", url);
+  console.log(now + " url", url, "device_id", token.device_id, "signature", token.signature);
   //console.log("result", result);
   return result;
 }
