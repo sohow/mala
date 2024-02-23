@@ -86,8 +86,8 @@ function CreateSession() {
     const apiUrl = 'https://api.aliyundrive.com/users/v1/users/device/create_session';
     let { signature, publicKey } = GetSignature();
     const postData = {
-      'deviceName': 'Chrome浏览器',
-      'modelName': 'Windows网页版',
+      'deviceName': 'ALI浏览器',
+      'modelName': 'Linux网页版',
       'pubKey': publicKey
     };
     const resp = AlipanPost(apiUrl, postData, token.user_id, '');
