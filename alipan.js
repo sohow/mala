@@ -23,7 +23,7 @@ let token = {
   refresh_token: '',
   nonce: 0,
   drive_id: '',
-  parent_file_id: ''
+  parent_file_id: '',
   app_id: ''
 };
 
