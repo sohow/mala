@@ -60,9 +60,9 @@ function GetSignature() {
     return u8;
   }
 
-  //const privateKey = toU8(SHA256(user_id));
+  const privateKey = toU8(SHA256(user_id));
   const appId = token.app_id;
-  const privateKey = secp256k1.utils.randomPrivateKey();
+  //const privateKey = secp256k1.utils.randomPrivateKey();
   let publicKey = secp256k1.getPublicKey(privateKey);
   const msg = `${appId}:${deviceId}:${user_id}:${nonce}`;
   const sig = secp256k1.sign(toU8(SHA256(msg)), privateKey);
@@ -82,6 +82,7 @@ function CreateSession() {
       return false;
     }
 
+    token.nonce = 0;
     const apiUrl = 'https://api.aliyundrive.com/users/v1/users/device/create_session';
     let { signature, publicKey } = GetSignature();
     const postData = {
@@ -178,6 +179,7 @@ function FreshToken(resp) {
 function AlipanPost(url, postData) {
   let result = {};
   try {
+    GetSignature();
     const res = request('POST', url, {
         headers: {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
@@ -214,6 +216,7 @@ function ListFile() {
 
 function RenewSession() {
   let data = {};
+  token.nonce = token.nonce + 1;
   const res = AlipanPost("https://api.aliyundrive.com/users/v1/users/device/renew_session", data);
   return res;
 }
