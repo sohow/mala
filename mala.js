@@ -18,6 +18,7 @@ const {
     CreateSession,
     RefreshToken
 }                     = require('./alipan');
+const {States} = require('./ha');
 
 
 
@@ -27,6 +28,7 @@ let server = http.createServer();
 let curFileList = {};
 let bot = null;
 let botName = '';
+let haLastState1 = 'off';
 
 
 server.on('request', async (request, response) => {
@@ -99,6 +101,29 @@ server.on('request', async (request, response) => {
                     {
                         code: -1,
                         msg:    `site or tag can not be empty`
+                    }
+                ));
+            break;
+
+        case '/mala/switch/state':
+            response.setHeader('Content-Type', 'application/json; charset=utf-8');
+            let ent = States('binary_sensor.isa_dw2hl_6a75_magnet_sensor_2');
+            let s = '未知状态';
+            if (ent.state && ent.state != haLastState1) {
+                haLastState1 = ent.state;
+                const contact = await bot.Contact.find({name: '不辞远'});
+                if (ent.state === 'off') {
+                    s = '已关闭';
+                } else if (ent.state === 'on') {
+                    s = '已打开';
+                }
+                await contact.say('【HA】抽屉'+s);
+            }
+
+            response.end(JSON.stringify(
+                    {
+                        s: s,
+                        state: ent.state
                     }
                 ));
             break;
