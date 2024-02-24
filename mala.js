@@ -114,7 +114,8 @@ server.on('request', async (request, response) => {
             } else if (ent.state === 'on') {
                 s = '已打开';
             }
-                
+
+            const tmp1 = haLastState1;
             if (ent.state && ent.state != haLastState1) {
                 haLastState1 = ent.state;
                 const contact = await bot.Contact.find({name: '不辞远'});
@@ -124,7 +125,8 @@ server.on('request', async (request, response) => {
             response.end(JSON.stringify(
                     {
                         s: s,
-                        state: ent.state
+                        state: ent.state,
+                        haLastState1: tmp1
                     }
                 ));
             break;
