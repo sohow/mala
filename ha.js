@@ -5,7 +5,7 @@ const gconf = require('./gconf');
 function States(ent) {
 	let result = {};
 	try {
-		let url = `http://localhost:8023/api/states/binary_sensor.${ent}`;
+		let url = `http://localhost:8023/api/states/${ent}`;
 		let res = request('GET', url, {
 	        timeout: 3*1000,
 	        headers: {
