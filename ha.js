@@ -1,5 +1,5 @@
 const request = require('sync-request');
-const gconf = require('./gconf');
+const {gconf} = require('./gconf');
 
 
 function States(ent) {
