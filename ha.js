@@ -10,7 +10,7 @@ function States(ent) {
 	        timeout: 3*1000,
 	        headers: {
 	            "Content-type": "application/json;charset-utf-8",
-	            "Authorization": gconf.haToken
+	            "Authorization": 'Bearer ' + gconf.haToken
 	        },
 	    });
 		result = JSON.parse(res.getBody('utf8'));
