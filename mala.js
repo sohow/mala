@@ -109,14 +109,15 @@ server.on('request', async (request, response) => {
             response.setHeader('Content-Type', 'application/json; charset=utf-8');
             let ent = States('binary_sensor.isa_dw2hl_6a75_magnet_sensor_2');
             let s = '未知状态';
+            if (ent.state === 'off') {
+                    s = '已关闭';
+            } else if (ent.state === 'on') {
+                s = '已打开';
+            }
+                
             if (ent.state && ent.state != haLastState1) {
                 haLastState1 = ent.state;
                 const contact = await bot.Contact.find({name: '不辞远'});
-                if (ent.state === 'off') {
-                    s = '已关闭';
-                } else if (ent.state === 'on') {
-                    s = '已打开';
-                }
                 await contact.say('【HA】抽屉'+s);
             }
 
