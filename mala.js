@@ -1,6 +1,7 @@
 const http = require('http');
 const request = require('sync-request');
 const url = require("url");
+const moment = require('moment');
 
 const {
   WechatyBuilder,
@@ -118,8 +119,9 @@ server.on('request', async (request, response) => {
             const tmp1 = haLastState1;
             if (ent.state && ent.state != haLastState1) {
                 haLastState1 = ent.state;
+                const now = moment().format('YYYY-MM-DD HH:mm:ss');
                 const contact = await bot.Contact.find({name: '不辞远'});
-                await contact.say('【HA】抽屉'+s);
+                await contact.say('【HA】抽屉'+ s + ' ' + now);
             }
 
             response.end(JSON.stringify(
