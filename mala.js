@@ -70,9 +70,9 @@ server.on('request', async (request, response) => {
             response.setHeader('Content-Type', 'application/json; charset=utf-8');
             const did = path.did;
             let start_time =  moment().format('YYYYMMDD ') + path.start_time;
-            const start_time = moment(start_time).format('x') / 1000;
+            start_time = moment(start_time).format('x') / 1000;
             let end_time =  moment().format('YYYYMMDD ') + path.end_time;
-            const end_time = moment(end_time).format('x') / 1000;
+            end_time = moment(end_time).format('x') / 1000;
 
             const file = `/data/homeassistant/.storage/xiaomi_miot/device-data-${did}-4121.json`;
             let open_times = 0;
