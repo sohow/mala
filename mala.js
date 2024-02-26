@@ -69,21 +69,22 @@ server.on('request', async (request, response) => {
         case '/mala/etv/done':
             response.setHeader('Content-Type', 'application/json; charset=utf-8');
             const did = path.did;
-            const start_time = path.start_time;
-            const end_time = path.end_time;
+            let start_time =  moment().format('YYYYMMDD ') + path.start_time;
+            const start_time = moment(start_time).format('x') / 1000;
+            let end_time =  moment().format('YYYYMMDD ') + path.end_time;
+            const end_time = moment(end_time).format('x') / 1000;
 
             const file = `/data/homeassistant/.storage/xiaomi_miot/device-data-${did}-4121.json`;
-            let openTimes = 0;
+            let open_times = 0;
             if (fs.existsSync(file)) {
               const jsonStr = fs.readFileSync(file, 'utf8');
               if (jsonStr) {
                 const res = JSON.parse(jsonStr.toString());
                 for (const v of res.data.result) {
                     if (v.time) {
-                        const now = moment(v.time*1000).format('HHmmss').replace(/^0+/, '');
                         //console.log(v.time, now);
-                        if (now >= start_time && now <= end_time) {
-                            openTimes++;
+                        if (v.time >= start_time && v.time <= end_time) {
+                            open_times++;
                         }
                     }
                 }
@@ -92,7 +93,9 @@ server.on('request', async (request, response) => {
 
             response.end(JSON.stringify(
                     {
-                        openTimes: openTimes
+                        open_times: open_times,
+                        start_time: start_time,
+                        end_time: end_time
                     }
                 ));
             break;
