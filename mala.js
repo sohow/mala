@@ -80,7 +80,8 @@ server.on('request', async (request, response) => {
                 const res = JSON.parse(jsonStr.toString());
                 for (const v of res.data.result) {
                     if (v.time) {
-                        const now = moment(v.time).format('HHmmss').replace(/^0+/, '');;
+                        const now = moment(v.time*1000).format('HHmmss').replace(/^0+/, '');
+                        //console.log(v.time, now);
                         if (now >= start_time && now <= end_time) {
                             openTimes++;
                         }
