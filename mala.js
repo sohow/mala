@@ -2,6 +2,7 @@ const http = require('http');
 const request = require('sync-request');
 const url = require("url");
 const moment = require('moment');
+const fs = require("fs");
 
 const {
   WechatyBuilder,
