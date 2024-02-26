@@ -35,6 +35,7 @@ let haLastState1 = 'off';
 server.on('request', async (request, response) => {
     const path = url.parse(request.url,true).query;
     let refreshType = path.refresh_type;
+    
 
     let host_meta = {};
     const remote_ip = request.socket.remoteAddress.replace('::ffff:','');
@@ -61,6 +62,35 @@ server.on('request', async (request, response) => {
             response.end(JSON.stringify(
                     {
                         status: 0
+                    }
+                ));
+            break;
+        case '/mala/etv/done':
+            response.setHeader('Content-Type', 'application/json; charset=utf-8');
+            const did = path.did;
+            const start_time = path.start_time;
+            const end_time = path.end_time;
+
+            const file = `/data/homeassistant/.storage/xiaomi_miot/device-data-${did}-4121.json`;
+            let openTimes = 0;
+            if (fs.existsSync(file)) {
+              const jsonStr = fs.readFileSync(file, 'utf8');
+              if (jsonStr) {
+                const res = JSON.parse(jsonStr.toString());
+                for (const v of res.data.result) {
+                    if (v.time) {
+                        const now = moment(v.time).format('HHmmss').replace(/^0+/, '');;
+                        if (now >= start_time && now <= end_time) {
+                            openTimes++;
+                        }
+                    }
+                }
+              }
+            }
+
+            response.end(JSON.stringify(
+                    {
+                        openTimes: openTimes
                     }
                 ));
             break;
