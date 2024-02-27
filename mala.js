@@ -2,7 +2,6 @@ const http = require('http');
 const request = require('sync-request');
 const url = require("url");
 const moment = require('moment');
-const fs = require("fs");
 
 const {
   WechatyBuilder,
@@ -21,6 +20,7 @@ const {
     RefreshToken
 }                     = require('./alipan');
 const {States} = require('./ha');
+const {GetDviceEventByTime} = require('./miot');
 
 
 
@@ -30,7 +30,7 @@ let server = http.createServer();
 let curFileList = {};
 let bot = null;
 let botName = '';
-let haLastState1 = 'off';
+let lastDeviceCheckTime = new Date().valueOf(); //now
 
 
 server.on('request', async (request, response) => {
@@ -69,31 +69,16 @@ server.on('request', async (request, response) => {
         case '/mala/etv/done':
             response.setHeader('Content-Type', 'application/json; charset=utf-8');
             const did = path.did;
+
             let start_time =  moment().format('YYYYMMDD ') + path.start_time;
             start_time = moment(start_time).format('x') / 1000;
             let end_time =  moment().format('YYYYMMDD ') + path.end_time;
             end_time = moment(end_time).format('x') / 1000;
 
-            const file = `/data/homeassistant/.storage/xiaomi_miot/device-data-${did}-4121.json`;
-            let open_times = 0;
-            if (fs.existsSync(file)) {
-              const jsonStr = fs.readFileSync(file, 'utf8');
-              if (jsonStr) {
-                const res = JSON.parse(jsonStr.toString());
-                for (const v of res.data.result) {
-                    if (v.time) {
-                        //console.log(v.time, now);
-                        if (v.time >= start_time && v.time <= end_time) {
-                            open_times++;
-                        }
-                    }
-                }
-              }
-            }
-
+            let ents = GetDviceEventByTime(did, start_time, end_time);
             response.end(JSON.stringify(
                     {
-                        open_times: open_times,
+                        open_times: ents.length,
                         start_time: start_time,
                         end_time: end_time
                     }
@@ -104,8 +89,7 @@ server.on('request', async (request, response) => {
             let fileList = GetListFileByKey('file_id');
             var d = fileList.filter(function(v){ return curFileList.indexOf(v) == -1 });
             if (d.length > 0) {
-                const contact = await bot.Contact.find({name: '不辞远'});
-                await contact.say('【NOTICE】 有' + d.length + '个新文件，请注意查看');
+                sayToRoom('【NOTICE】 有' + d.length + '个新文件，请注意查看');
             }
             curFileList = fileList;
 
@@ -121,8 +105,7 @@ server.on('request', async (request, response) => {
             response.setHeader('Content-Type', 'application/json; charset=utf-8');
             let num = GetTodayUploadNum();
             if (num === 0) {
-                const contact = await bot.Contact.find({name: '不辞远'});
-                await contact.say('【REMIND】今天还未分享学习视频 ');
+                sayToRoom('【REMIND】今天还未分享学习视频 ');
             }
 
             response.end(JSON.stringify(
@@ -143,32 +126,40 @@ server.on('request', async (request, response) => {
 
         case '/mala/switch/state':
             response.setHeader('Content-Type', 'application/json; charset=utf-8');
-            let ent = States('binary_sensor.isa_dw2hl_6a75_magnet_sensor_2');
-            let s = '未知状态';
-            if (ent.state === 'off') {
-                    s = '已关闭';
-            } else if (ent.state === 'on') {
-                s = '已打开';
-            }
+            //let ent = States('binary_sensor.isa_dw2hl_6a75_magnet_sensor_2');
+            let ents = GetDviceEventByTime(path.did, lastDeviceCheckTime, 2529560204);
+            lastDeviceCheckTime = new Date().valueOf();
 
-            const tmp1 = haLastState1;
-            if (ent.state && ent.state != haLastState1) {
-                haLastState1 = ent.state;
-                const now = moment().format('YYYY-MM-DD HH:mm:ss');
-                const contact = await bot.Contact.find({name: '不辞远'});
-                await contact.say('【HA】抽屉'+ s + ' ' + now);
+            if (ents.length > 0) {
+                const msg = "";
+                const time = "";
+                const state = "";
+                for (const v of ents) {
+                    if (v.value === "[\"01\"]") {
+                        state = "已关闭";
+                    } else if (v.value === "[\"00\"]") {
+                        state = "已打开";
+                    } else if (v.value === "[\"02\"]") {
+                        state = "超时未关闭";
+                    } else {
+                        state = "未知";
+                    }
+                    time = moment(v.time).format("HH:mm:ss");
+                    msg += `${state} ${time}\n`;
+                }
+                sayToRoom('【HA】抽屉: '+ path.did_name + "\n" + msg);
             }
 
             response.end(JSON.stringify(
                     {
-                        s: s,
-                        state: ent.state,
-                        haLastState1: tmp1
+                        did: path.did,
+                        lastDeviceCheckTime: lastDeviceCheckTime,
+                        ents: ents
                     }
                 ));
             break;
         case '/mala/contact/say':
-            const contact = await bot.Contact.find({name: '不辞远'});
+            const contact = await bot.Contact.find({name: 'Lunia'});
             console.log(contact);
             sayres = await contact.say('welcome to wechaty!');
             console.log(sayres);
@@ -176,10 +167,7 @@ server.on('request', async (request, response) => {
             response.end(JSON.stringify(sayres));
             break;
         case '/mala/room/say':
-            const room = await bot.Room.find({topic: '哈哈'});
-            console.log(room);
-            sayres = await room.say('Hello world!');
-            console.log(sayres);
+            sayToRoom('Hello!');
 
             response.end(JSON.stringify(sayres));
             break;
@@ -188,6 +176,15 @@ server.on('request', async (request, response) => {
             response.end("404 NOT FOUND");
     }
 });
+
+function sayToRoom(msg, room) {
+    if (typeof room === 'undefined') {
+        room = '哈哈';
+    }
+
+    const room = await bot.Room.find({topic: room});
+    await room.say(msg);
+}
 
 
 (async ()=>{
@@ -219,24 +216,32 @@ function onLogout (user) {
 async function onMessage (msg) {
   //log.info('StarterBot', msg.toString());
 
-  if (await msg.mentionSelf()) {
+  const from = msg.from();
+  if (await msg.mentionSelf() || from.name() === botName) {
      console.log('this message were mentioned me! [You were mentioned] tip ([有人@我]的提示)');
      log.info('StarterBot', msg.toString());
 
     if (msg.text().indexOf('alipan ') > 0) {
         let cmd = msg.text().replace('@' + botName + ' alipan ', '');
+        if (from.name() === botName) {
+            cmd = msg.text().replace('alipan ', '');
+        }
+
         let resMsg = 'unknow command: ' + cmd;
         if (cmd === 'notice') {
             let fileList = GetListFileByKey('file_id');
             var d = fileList.filter(function(v){ return curFileList.indexOf(v) == -1 });
 
             resMsg = '【NOTICE】当前共' + (fileList.length - 2) + '个学习视频';
+
+            await msg.say(resMsg);
         } else if (cmd === 'remind') {
             let num = GetTodayUploadNum();
             resMsg = '【REMIND】今天已分享' + num + '个学习视频';
-        }
 
-        await msg.say(resMsg);
+            await msg.say(resMsg);
+        }
+        //await msg.say(resMsg);
     }
   }
 }
