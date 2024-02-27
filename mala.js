@@ -219,10 +219,11 @@ async function onMessage (msg) {
   if (msg.type() === bot.Message.Type.Text) {
       const from = msg.talker();
       if (await msg.mentionSelf() || from.name() === botName) {
-         console.log('this message were mentioned me! [You were mentioned] tip ([有人@我]的提示)');
-         log.info('StarterBot', msg.toString());
+         //console.log('this message were mentioned me! [You were mentioned] tip ([有人@我]的提示)');
+         log.info('onMessage', msg.toString());
 
-        if (msg.text().indexOf('alipan ') > 0) {
+         console.log(from.name(), botName, msg.text().replace('alipan ', ''));
+        if (msg.text().indexOf('alipan ') >= 0) {
             let cmd = msg.text().replace('@' + botName + ' alipan ', '');
             if (from.name() === botName) {
                 cmd = msg.text().replace('alipan ', '');
