@@ -128,10 +128,10 @@ server.on('request', async (request, response) => {
             response.setHeader('Content-Type', 'application/json; charset=utf-8');
             //let ent = States('binary_sensor.isa_dw2hl_6a75_magnet_sensor_2');
             if (path.start_time) {
-                lastDeviceCheckTime = start_time;
+                lastDeviceCheckTime = path.start_time;
             }
             let newEnts = GetDviceEventByTime(path.did, lastDeviceCheckTime, 2529560204);
-            lastDeviceCheckTime = new Date().valueOf() / 1000;
+            lastDeviceCheckTime = intval(new Date().valueOf() / 1000);
 
             if (newEnts.length > 0) {
                 const msg = "";
