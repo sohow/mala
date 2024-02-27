@@ -89,7 +89,7 @@ server.on('request', async (request, response) => {
             let fileList = GetListFileByKey('file_id');
             var d = fileList.filter(function(v){ return curFileList.indexOf(v) == -1 });
             if (d.length > 0) {
-                sayToRoom('【NOTICE】 有' + d.length + '个新文件，请注意查看');
+                await sayToRoom('【NOTICE】 有' + d.length + '个新文件，请注意查看');
             }
             curFileList = fileList;
 
@@ -105,7 +105,7 @@ server.on('request', async (request, response) => {
             response.setHeader('Content-Type', 'application/json; charset=utf-8');
             let num = GetTodayUploadNum();
             if (num === 0) {
-                sayToRoom('【REMIND】今天还未分享学习视频 ');
+                await sayToRoom('【REMIND】今天还未分享学习视频 ');
             }
 
             response.end(JSON.stringify(
@@ -147,7 +147,7 @@ server.on('request', async (request, response) => {
                     time = moment(v.time).format("HH:mm:ss");
                     msg += `${state} ${time}\n`;
                 }
-                sayToRoom('【HA】抽屉: '+ path.did_name + "\n" + msg);
+                await sayToRoom('【HA】抽屉: '+ path.did_name + "\n" + msg);
             }
 
             response.end(JSON.stringify(
@@ -167,7 +167,7 @@ server.on('request', async (request, response) => {
             response.end(JSON.stringify(sayres));
             break;
         case '/mala/room/say':
-            sayToRoom('Hello!');
+            await sayToRoom('Hello!');
 
             response.end(JSON.stringify(sayres));
             break;
@@ -177,7 +177,7 @@ server.on('request', async (request, response) => {
     }
 });
 
-function sayToRoom(msg, topic) {
+async function sayToRoom(msg, topic) {
     if (typeof topic === 'undefined') {
         topic = '哈哈';
     }
