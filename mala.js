@@ -134,9 +134,9 @@ server.on('request', async (request, response) => {
             lastDeviceCheckTime = parseInt(new Date().valueOf() / 1000);
 
             if (newEnts.length > 0) {
-                const msg = "";
-                const time = "";
-                const state = "";
+                let msg = "";
+                let time = "";
+                let state = "";
                 for (const v of newEnts) {
                     if (v.value === "[\"01\"]") {
                         state = "已关闭";
