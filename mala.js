@@ -147,7 +147,7 @@ server.on('request', async (request, response) => {
                     } else {
                         state = "未知";
                     }
-                    time = moment(v.time).format("HH:mm:ss");
+                    time = moment(v.time*1000).format("HH:mm:ss");
                     msg += `${state} ${time}\n`;
                 }
                 await sayToRoom('【HA】抽屉: '+ path.did_name + "\n" + msg);
