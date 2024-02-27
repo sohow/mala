@@ -131,7 +131,7 @@ server.on('request', async (request, response) => {
                 lastDeviceCheckTime = start_time;
             }
             let newEnts = GetDviceEventByTime(path.did, lastDeviceCheckTime, 2529560204);
-            lastDeviceCheckTime = new Date().valueOf();
+            lastDeviceCheckTime = new Date().valueOf() / 1000;
 
             if (newEnts.length > 0) {
                 const msg = "";
