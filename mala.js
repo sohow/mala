@@ -216,34 +216,37 @@ function onLogout (user) {
 async function onMessage (msg) {
   //log.info('StarterBot', msg.toString());
 
-  const from = msg.from();
-  if (await msg.mentionSelf() || from.name() === botName) {
-     console.log('this message were mentioned me! [You were mentioned] tip ([有人@我]的提示)');
-     log.info('StarterBot', msg.toString());
+  if (msg.type() === bot.Message.Type.Text) {
+      const from = msg.talker();
+      if (await msg.mentionSelf() || from.name() === botName) {
+         console.log('this message were mentioned me! [You were mentioned] tip ([有人@我]的提示)');
+         log.info('StarterBot', msg.toString());
 
-    if (msg.text().indexOf('alipan ') > 0) {
-        let cmd = msg.text().replace('@' + botName + ' alipan ', '');
-        if (from.name() === botName) {
-            cmd = msg.text().replace('alipan ', '');
+        if (msg.text().indexOf('alipan ') > 0) {
+            let cmd = msg.text().replace('@' + botName + ' alipan ', '');
+            if (from.name() === botName) {
+                cmd = msg.text().replace('alipan ', '');
+            }
+
+            let resMsg = 'unknow command: ' + cmd;
+            if (cmd === 'notice') {
+                let fileList = GetListFileByKey('file_id');
+                var d = fileList.filter(function(v){ return curFileList.indexOf(v) == -1 });
+
+                resMsg = '【NOTICE】当前共' + (fileList.length - 2) + '个学习视频';
+
+                await msg.say(resMsg);
+            } else if (cmd === 'remind') {
+                let num = GetTodayUploadNum();
+                resMsg = '【REMIND】今天已分享' + num + '个学习视频';
+
+                await msg.say(resMsg);
+            }
+            //await msg.say(resMsg);
         }
-
-        let resMsg = 'unknow command: ' + cmd;
-        if (cmd === 'notice') {
-            let fileList = GetListFileByKey('file_id');
-            var d = fileList.filter(function(v){ return curFileList.indexOf(v) == -1 });
-
-            resMsg = '【NOTICE】当前共' + (fileList.length - 2) + '个学习视频';
-
-            await msg.say(resMsg);
-        } else if (cmd === 'remind') {
-            let num = GetTodayUploadNum();
-            resMsg = '【REMIND】今天已分享' + num + '个学习视频';
-
-            await msg.say(resMsg);
-        }
-        //await msg.say(resMsg);
-    }
+      }
   }
+  
 }
 
 bot = WechatyBuilder.build({
