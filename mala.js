@@ -177,12 +177,12 @@ server.on('request', async (request, response) => {
     }
 });
 
-function sayToRoom(msg, room) {
-    if (typeof room === 'undefined') {
-        room = '哈哈';
+function sayToRoom(msg, topic) {
+    if (typeof topic === 'undefined') {
+        topic = '哈哈';
     }
 
-    const room = await bot.Room.find({topic: room});
+    const room = await bot.Room.find({topic: topic});
     await room.say(msg);
 }
 
