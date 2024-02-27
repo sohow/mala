@@ -127,6 +127,9 @@ server.on('request', async (request, response) => {
         case '/mala/switch/state':
             response.setHeader('Content-Type', 'application/json; charset=utf-8');
             //let ent = States('binary_sensor.isa_dw2hl_6a75_magnet_sensor_2');
+            if (path.start_time) {
+                lastDeviceCheckTime = start_time;
+            }
             let newEnts = GetDviceEventByTime(path.did, lastDeviceCheckTime, 2529560204);
             lastDeviceCheckTime = new Date().valueOf();
 
