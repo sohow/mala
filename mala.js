@@ -127,14 +127,14 @@ server.on('request', async (request, response) => {
         case '/mala/switch/state':
             response.setHeader('Content-Type', 'application/json; charset=utf-8');
             //let ent = States('binary_sensor.isa_dw2hl_6a75_magnet_sensor_2');
-            let ents = GetDviceEventByTime(path.did, lastDeviceCheckTime, 2529560204);
+            let newEnts = GetDviceEventByTime(path.did, lastDeviceCheckTime, 2529560204);
             lastDeviceCheckTime = new Date().valueOf();
 
-            if (ents.length > 0) {
+            if (newEnts.length > 0) {
                 const msg = "";
                 const time = "";
                 const state = "";
-                for (const v of ents) {
+                for (const v of newEnts) {
                     if (v.value === "[\"01\"]") {
                         state = "已关闭";
                     } else if (v.value === "[\"00\"]") {
@@ -154,7 +154,7 @@ server.on('request', async (request, response) => {
                     {
                         did: path.did,
                         lastDeviceCheckTime: lastDeviceCheckTime,
-                        ents: ents
+                        ents: newEnts
                     }
                 ));
             break;
